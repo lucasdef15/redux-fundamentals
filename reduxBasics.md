@@ -2,9 +2,9 @@
 
 Vamos dar uma olhada rápida nas peças que compõem um aplicativo Redux e como ele funciona.
 
-## O Redux Store
+# O Redux Store
 
-O centro de todo aplicativo Redux é a store. Uma "store" é um contêiner que armazena o estado global do seu aplicativo.
+O centro de todo aplicativo Redux é a "store". Uma "store" é um contêiner que armazena o estado global do seu aplicativo.
 
 Um "store" é um objeto JavaScript com algumas funções e habilidades que o diferenciam de um objeto global comum:
 
@@ -109,9 +109,9 @@ Um "store" é um objeto JavaScript com algumas funções e habilidades que o dif
 
 Como o Redux é uma biblioteca JS autônoma, sem dependências, este exemplo é escrito carregando apenas uma única tag de script para a biblioteca Redux e usando JS e HTML básicos para a interface do usuário. Na prática, o Redux é normalmente usado instalando os pacotes Redux do NPM, e a interface do usuário é criada usando uma biblioteca como o React.
 
-Vamos seprar esse exemplo parte por parte para podermos ver o que está acontecendo.
+Vamos dividir este exemplo em partes para que possamos entender melhor o que está acontecendo.
 
-### State, Actions, e Reducers
+# State, Actions, e Reducers
 
 Começamos definindo um valor para o estado inicial que descreve a aplicação:
 
@@ -126,7 +126,7 @@ Para este aplicativo, vamos acompanhar um único número com o valor atual do no
 
 Os aplicativos Redux normalmente têm um objeto JS como a peça raiz do estado, com outros valores dentro desse objeto.
 
-Em seguida, definimos uma função reducer. O reducer recebe dois argumentos, o estado atual e um objeto de ação descrevendo o que aconteceu. Quando o aplicativo Redux é iniciado, ainda não temos nenhum estado, portanto, fornecemos o initialState como o valor padrão para este reducer:
+Em seguida, definimos uma função reducer. O reducer recebe dois argumentos, o estado atual e um objeto de ação descrevendo o que aconteceu. Quando o aplicativo Redux é iniciado, ainda não temos nenhum estado, portanto, fornecemos o **initialState** como o valor padrão para este reducer:
 
 ```js
 // Create a "reducer" function that determines what the new state
@@ -147,13 +147,13 @@ function counterReducer(state = initialState, action) {
 }
 ```
 
-Os objetos "action"(ação) sempre têm um campo "type"(tipo), que é uma string que você fornece e atua como um nome exclusivo para a ação. O "type" deve ser um nome legível para que qualquer pessoa que olhe para este código entenda o que significa. Neste caso, usamos a palavra "counter" como a primeira metade do nosso tipo de ação, e a segunda metade é uma descrição do que aconteceu. Neste caso, nosso "contador" foi "incrementado", então escrevemos o tipo de ação como "counter/incremented".
+Os objetos "action"(ação) sempre têm um campo "type"(tipo), que é uma string que você fornece, e atua como um nome exclusivo para a ação. O "type" deve ser um nome legível para que qualquer pessoa que olhe para este código entenda o que significa. Neste caso, usamos a palavra "counter" como a primeira metade do nosso tipo de ação, e a segunda metade é uma descrição do que aconteceu. Neste caso, nosso "contador" foi "incrementado", então escrevemos o tipo de ação como "counter/incremented".
 
 Com base no tipo de ação, precisamos retornar um novo objeto para ser o novo resultado de estado, ou retornar o objeto de estado existente se nada deve ser alterado. Note que atualizamos o estado de forma imutável, copiando o estado existente e atualizando a cópia, em vez de modificar diretamente o objeto original.
 
-#### Store
+# Store
 
-Agora que temos uma função de reducer, podemos criar uma instância de store chamando a API createStore da biblioteca Redux.
+Agora que temos uma função de reducer, podemos criar uma instância de "store" chamando a API **createStore** da biblioteca Redux.
 
 ```js
 // Create a new Redux store with the `createStore` function,
@@ -161,11 +161,11 @@ Agora que temos uma função de reducer, podemos criar uma instância de store c
 const store = Redux.createStore(counterReducer);
 ```
 
-Passamos a função reducer para o createStore, que usa a função reducer para gerar o estado inicial e calcular futuras atualizações.
+Passamos a função reducer para o **createStore**, que usa a função reducer para gerar o estado inicial e calcular futuras atualizações.
 
-#### UI
+# UI
 
-Na interface do usuário de qualquer aplicativo, o estado existente é mostrado na tela. Quando um usuário faz algo, o aplicativo atualiza seus dados e, em seguida, redesenha a interface do usuário com esses valores.
+Na interface do usuário de qualquer aplicativo, o estado existente é mostrado na tela. Quando um usuário faz algo, o aplicativo atualiza seus dados e, em seguida, renderiza a interface do usuário com esses valores.
 
 ```js
 // Our "user interface" is some text in a single HTML element
@@ -186,15 +186,15 @@ store.subscribe(render);
 
 Neste pequeno exemplo, estamos usando apenas alguns elementos HTML básicos como nossa interface do usuário (UI), com um único elemento <div> mostrando o valor atual.
 
-Então, escrevemos uma função que sabe como obter o estado mais recente do "Redux Store" usando o método store.getState(), em seguida, usa esse valor e atualiza a UI para mostrá-lo.
+Então, escrevemos uma função que sabe como obter o estado mais recente do "Redux Store" usando o método **store.getState()**, em seguida, usa esse valor e atualiza a UI para mostrá-lo.
 
-O "Redux Store" nos permite chamar store.subscribe() e passar uma função "subscriber callback" que será chamada sempre que o "store" for atualizado. Assim, podemos passar nossa função de renderização como o "subscriber"(assinante) e saber que sempre que o "store" for atualizado, podemos atualizar a UI com o último valor.
+O "Redux Store" nos permite chamar **store.subscribe()** e passar uma função "subscriber callback" que será chamada sempre que o "store" for atualizado. Assim, podemos passar nossa função de renderização como o "subscriber"(assinante) e saber que sempre que o "store" for atualizado, podemos atualizar a UI com o último valor.
 
 O Redux em si é uma biblioteca independente que pode ser usada em qualquer lugar. Isso também significa que ele pode ser usado com qualquer camada de interface do usuário.
 
-#### Dispatching(enviando) Actions
+# Dispatching(enviando) Actions
 
-Finalmente, precisamos responder à entrada do usuário criando objetos "actgion" que descrevam o que aconteceu e "dispatching"(despachando-os) para "store". Quando chamamos store.dispatch(action), "store" executa o "reducer", calcula o estado atualizado e executa os assinantes para atualizar a interface do usuário.
+Por último, precisamos responder à entrada do usuário criando objetos "action" que descrevam o que aconteceu e "dispatching"(despachando-os) para "store". Quando chamamos store.dispatch(action), "store" executa o "reducer", calcula o estado atualizado e executa os assinantes para atualizar a interface do usuário.
 
 ```js
 // Handle user inputs by "dispatching" action objects,
@@ -230,7 +230,7 @@ Aqui, vamos despachar as ações que farão o redutor adicionar 1 ou subtrair 1 
 
 Também podemos escrever código que despacha uma ação somente se uma determinada condição for verdadeira, ou escrever algum código assíncrono que despacha uma ação após um tempo.
 
-## Data Flow
+# Data Flow
 
 Podemos resumir o fluxo de dados em um aplicativo Redux com este diagrama. Ele representa como:
 
