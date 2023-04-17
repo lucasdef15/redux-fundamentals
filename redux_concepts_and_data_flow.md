@@ -84,3 +84,147 @@ arr3.push("c");
 There's some important Redux terms that you'll need to be familiar with before we continue:
 
 ### Actions
+
+An **action** is a plain JavaScript object that has a **type** field. **You can think of an action as an event that describes something that happened in the application.**
+
+The **type** field should be a string that gives this action a descriptive name, like **"todos/todoAdded"**. We usually write that type string like **"domain/eventName"**, where the first part is the feature or category that this action belongs to, and the second part is the specific thing that happened.
+
+An action object can have **other fields with additional information about what happened**. By convention, we put that information in a field called **payload.**
+
+A typical action object might look like this:
+
+```js
+const addTodoAction = {
+  type: "todos/todoAdded",
+  payload: "Buy milk",
+};
+```
+
+### Reducers
+
+A **reducer** is a function that receives the current **state** and an **action** object, decides how to update the state if necessary, and returns the new state: **(state, action) => newState**. **You can think of a reducer as an event listener which handles events based on the received action (event) type.**
+
+Reducers must always follow some specific rules:
+
+- They should only calculate the new state value based on the state and action arguments
+- They are not allowed to modify the existing state. Instead, they must make immutable updates, by copying the existing state and making changes to the copied values
+- They must not do any asynchronous logic, calculate random values, or cause other "side effects"
+
+The logic inside reducer functions typically follows the same series of steps:
+
+- Check to see if the reducer cares about this action
+- if so, make a copy of the state, update the copy with new values, and return it
+- Otherwise, return the existing state unchanged
+
+Here's a small example of a reducer, showing the steps that each reducer should follow:
+
+```js
+const initialState = { value: 0 };
+
+function counterReducer(state = initialState, action) {
+  // Check to see if the reducer cares about this action
+  if (action.type === "counter/incremented") {
+    // If so, make a copy of `state`
+    return {
+      ...state,
+      // and update the copy with the new value
+      value: state.value + 1,
+    };
+  }
+  // otherwise return the existing state unchanged
+  return state;
+}
+```
+
+Reducers can use any kind of logic inside to decide what the new state should be: **if/else**, **switch**, loops, and so on.
+
+### Store
+
+The current Redux application state lives in an object called the store .
+
+The store is created by passing in a reducer, and has a method called getState that returns the current state value:
+
+```js
+import { configureStore } from "@reduxjs/toolkit";
+
+const store = configureStore({ reducer: counterReducer });
+
+console.log(store.getState());
+// {value: 0}
+```
+
+### Dispatch
+
+The Redux store has a method called **dispatch**. **The only way to update the state is to call store.dispatch() and pass in an action object**. The store will run its reducer function and save the new state value inside, and we can call **getState()** to retrieve the updated value:
+
+```js
+store.dispatch({ type: "counter/incremented" });
+
+console.log(store.getState());
+// {value: 1}
+```
+
+**You can think of dispatching actions as "triggering an event"** in the application. Something happened, and we want the store to know about it. Reducers act like event listeners, and when they hear an action they are interested in, they update the state in response.
+
+### Selectors
+
+Selectors are functions that know how to extract specific pieces of information from a store state value. As an application grows bigger, this can help avoid repeating logic as different parts of the app need to read the same data:
+
+```js
+const selectCounterValue = (state) => state.value;
+
+const currentValue = selectCounterValue(store.getState());
+console.log(currentValue);
+// 2
+```
+
+## Core Concepts and Principles
+
+Overall, we can summarize the intent behind Redux's design in three core concepts:
+
+### Single Source of Truth
+
+The **global state** of your application is stored as an object inside a single **store**. Any given piece of data should only exist in one location, rather than being duplicated in many places.
+
+This makes it easier to debug and inspect your app's state as things change, as well as centralizing logic that needs to interact with the entire application.
+
+This does not mean that every piece of state in your app must go into the Redux store! You should decide whether a piece of state belongs in Redux or your UI components, based on where it's needed.
+
+### State is Read-Only
+
+The only way to change the state is to dispatch an _action_, an object that describes what happened.
+
+This way, the UI won't accidentally overwrite data, and it's easier to trace why a state update happened. Since actions are plain JS objects, they can be logged, serialized, stored, and later replayed for debugging or testing purposes.
+
+### Changes are Made with Pure Reducer Functions
+
+To specify how the state tree is updated based on actions, you write **reducer** functions. Reducers are pure functions that take the previous state and an action, and return the next state. Like any other functions, you can split reducers into smaller functions to help do the work, or write reusable reducers for common tasks.
+
+## Redux Application Data Flow
+
+Earlier, we talked about "one-way data flow", which describes this sequence of steps to update the app:
+
+- State describes the condition of the app at a specific point in time
+- The UI is rendered based on that state
+- when something happens (such as a user clicking a button), the state is updated based on what occurred
+- The UI re-renders based on the new state
+
+For Redux specifically, we can break these steps into more detail:
+
+- **Initial setup:**
+
+  - A Redux store is created using a root reducer function
+  - The store calls the root reducer once, and saves the return value as its initial state
+  - When the UI is first rendered, UI components access the current state of the Redux store, and use that data to decide what to render. They also subscribe to any future store updates so they can know if the state has changed.
+
+- **Updates:**
+  - Something happens in the app, such as a user clicking a button
+  - The app code dispatches an action to the Redux store, like dispatch({type: 'counter/incremented'})
+  - The store runs the reducer function again with the previous state and the current action, and saves the return value as the new state
+  - The store notifies all parts of the UI that are subscribed that the store has been updated
+  - Each UI component that needs data from the store checks to see if the parts of the state they need have changed
+  - Each component that sees its data has changed forces a re-render with the new data, so it can update what's shown on the screen
+
+Here's what that data flow looks like visually:
+
+![Alt text](./assets/images/reduxdataflowdiagram.gif)
