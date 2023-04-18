@@ -235,3 +235,142 @@ If you don't have any preloadedState to pass in, you can pass the enhancer as th
 ```js
 const store = createStore(rootReducer, storeEnhancer);
 ```
+
+# Middleware
+
+Redux uses a special kind of addon called **middleware** to let us customize the dispatch function.
+
+**Redux middleware provides a third-party extension point between dispatching an action, and the moment it reaches the reducer.** People use Redux middleware for logging, crash reporting, talking to an asynchronous API, routing, and more.
+
+First, we'll look at how to add middleware to the store, then we'll show how you can write your own.
+
+## Using Middleware
+
+We already saw that you can customize a Redux store using store enhancers. Redux middleware are actually implemented on top of a very special store enhancer that comes built in with Redux, called **applyMiddleware**.
+
+Since we already know how to add enhancers to our store, we should be able to do that now. We'll start with **applyMiddleware** by itself, and we'll add three example middleware that have been included in this project.
+
+//src/store.js
+
+```js
+import { createStore, applyMiddleware } from "redux";
+import rootReducer from "./reducer";
+import { print1, print2, print3 } from "./exampleAddons/middleware";
+
+const middlewareEnhancer = applyMiddleware(print1, print2, print3);
+
+// Pass enhancer as the second arg, since there's no preloadedState
+const store = createStore(rootReducer, middlewareEnhancer);
+
+export default store;
+```
+
+As their names say, each of these middleware will print a number when an action is dispatched.
+
+What happens if we dispatch now?
+
+//src/index.js
+
+```js
+import store from "./store";
+
+store.dispatch({ type: "todos/todoAdded", payload: "Learn about actions" });
+// log: '1'
+// log: '2'
+// log: '3'
+```
+
+So how does that work?
+
+**Middleware form a pipeline around the store's dispatch method.** When we call **store.dispatch(action)**, we're actually calling the first middleware in the pipeline. That middleware can then do anything it wants when it sees the action. Typically, a middleware will check to see if the action is a specific type that it cares about, much like a reducer would. If it's the right type, the middleware might run some custom logic. Otherwise, it passes the action to the next middleware in the pipeline.
+
+_Unlike_ a reducer, **middleware can have side effects inside**, including timeouts and other async logic.
+
+In this case, the action is passed through:
+
+1. The **print1** middleware (which we see as **store.dispatch**)
+2. The **print2** middleware
+3. The **print3** middleware
+4. The original **store.dispatch**
+5. The root reducer inside **store**
+
+And since these are all function calls, they all return from that call stack. So, the print1 middleware is the first to run, and the last to finish.
+
+## Writing Custom Middleware
+
+We can also write our own middleware. You might not need to do this all the time, but custom middleware are a great way to add specific behaviors to a Redux application.
+
+**Redux middleware are written as a series of three nested functions.** Let's see what that pattern looks like. We'll start by trying to write this middleware using the **function** keyword, so that it's more clear what's happening:
+
+```js
+// Middleware written as ES5 functions
+
+// Outer function:
+function exampleMiddleware(storeAPI) {
+  return function wrapDispatch(next) {
+    return function handleAction(action) {
+      // Do anything here: pass the action onwards with next(action),
+      // or restart the pipeline with storeAPI.dispatch(action)
+      // Can also use storeAPI.getState() here
+
+      return next(action);
+    };
+  };
+}
+```
+
+Let's break down what these three functions do and what their arguments are.
+
+- exampleMiddleware: The outer function is actually the "middleware" itself. It will be called by applyMiddleware, and receives a storeAPI object containing the store's {dispatch, getState} functions. These are the same dispatch and getState functions that are actually part of the store. If you call this dispatch function, it will send the action to the start of the middleware pipeline. This is only called once.
+- wrapDispatch: The middle function receives a function called next as its argument. This function is actually the next middleware in the pipeline. If this middleware is the last one in the sequence, then next is actually the original store.dispatch function instead. Calling next(action) passes the action to the next middleware in the pipeline. This is also only called once
+- handleAction: Finally, the inner function receives the current action as its argument, and will be called every time an action is dispatched.
+
+Any middleware can return any value, and the return value from the first middleware in the pipeline is actually returned when you call **store.dispatch().** For example:
+
+```js
+const alwaysReturnHelloMiddleware = (storeAPI) => (next) => (action) => {
+  const originalResult = next(action);
+  // Ignore the original result, return something else
+  return "Hello!";
+};
+
+const middlewareEnhancer = applyMiddleware(alwaysReturnHelloMiddleware);
+const store = createStore(rootReducer, middlewareEnhancer);
+
+const dispatchResult = store.dispatch({ type: "some/action" });
+console.log(dispatchResult);
+// log: 'Hello!'
+```
+
+Let's try one more example. Middleware often look for a specific action, and then do something when that action is dispatched. Middleware also have the ability to run async logic inside. We can write a middleware that prints something on a delay when it sees a certain action:
+
+```js
+const delayedMessageMiddleware = (storeAPI) => (next) => (action) => {
+  if (action.type === "todos/todoAdded") {
+    setTimeout(() => {
+      console.log("Added a new todo: ", action.payload);
+    }, 1000);
+  }
+
+  return next(action);
+};
+```
+
+This middleware will look for "todo added" actions. Every time it sees one, it sets a 1-second timer, and then prints the action's payload to the console.
+
+## Middleware Use Cases
+
+So, what can we do with middleware? Lots of things!
+
+A middleware can do anything it wants when it sees a dispatched action:
+
+- Log something to the console
+- Set timeouts
+- Make asynchronous API calls
+- Modify the action
+- Pause the action or even stop it entirely
+- and anything else you can think of.
+
+In particular,** middleware are intended to contain logic with side effects.** In addition, **middleware can modify dispatch to accept things that are not plain action objects.** We'll talk more about both of these in Part 6: Async Logic.
+
+# Redux DevTools
