@@ -15,9 +15,11 @@ It's important to note that **you'll only have a single store in a Redux applica
 Every Redux store has a single root reducer function.
 
 The Redux core library has a **createStore API** that will create the store. Add a new file called **store.js**, and import **createStore** and the root reducer. Then, call **createStore** and pass in the root reducer:
+//this.create
 
 ```js
 import { createStore } from "redux";
+this;
 import rootReducer from "./reducer";
 
 const store = createStore(rootReducer);
